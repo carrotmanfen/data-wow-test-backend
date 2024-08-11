@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { ValidationPipe } from '@nestjs/common';
 import * as bodyParser from 'body-parser';
 import * as cors from 'cors';
 
@@ -8,6 +9,11 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.use(bodyParser.json({ limit: '10mb' }));
   app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
+  app.useGlobalPipes(new ValidationPipe({
+    whitelist: true, 
+    forbidNonWhitelisted: true, 
+    transform: true, 
+  }));
   const config = new DocumentBuilder()
     .setTitle('NestJS API For Data Wow Candidate Project')
     .setDescription('defualt did not use, account group for user api, post group for post api, auth group for auth api')

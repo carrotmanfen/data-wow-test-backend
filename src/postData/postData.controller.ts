@@ -3,6 +3,7 @@ import { ApiTags, ApiResponse, ApiBody, ApiProperty, ApiQuery, ApiParam, ApiBear
 import { PostDataService } from './postData.service';
 import { PostData } from './schemas/postData.model';
 import { AuthGuard } from 'src/auth/auth.guard';
+import { IsString, IsNotEmpty } from 'class-validator';
 
 class CreatePostDataDto {
 
@@ -10,6 +11,8 @@ class CreatePostDataDto {
         description: 'The text of post',
         example: 'this_is_my_post',
     })
+    @IsString()
+    @IsNotEmpty()
     text: string;
 
 }
@@ -20,6 +23,8 @@ class UpdatePostDataNameDto {
         description: 'The text of post',
         example: 'this_is_my_new_edit_post',
     })
+    @IsString()
+    @IsNotEmpty()
     text: string;
 
 }
@@ -30,6 +35,8 @@ class CommentPostDataDto {
         description: 'The text of comment',
         example: 'this_is_my_comment',
     })
+    @IsString()
+    @IsNotEmpty()
     text: string;
 
 }
@@ -40,8 +47,30 @@ class DeleteCommentDataDto{
         description: 'The objectId of comment',
         example: 'comment-id',
     })
+    @IsString()
+    @IsNotEmpty()
     comment_id: string;
     
+}
+
+class PostNameParamDto {
+    @ApiProperty({
+        description: 'The name of postBy',
+        example: 'postByName',
+    })
+    @IsString()
+    @IsNotEmpty()
+    postBy: string;
+}
+
+class PostIdParamDto {
+    @ApiProperty({
+        description: 'The objectId of post',
+        example: 'post-id',
+    })
+    @IsString()
+    @IsNotEmpty()
+    id: string;
 }
 
 @Controller('posts')
@@ -54,6 +83,7 @@ export class PostDataController {
     @Post('/createPost')
     @ApiBody({ type: CreatePostDataDto })
     @ApiResponse({ status: 201, description: 'Create new post' })
+    @ApiResponse({ status: 400, description: 'Bad Request' })
     @ApiResponse({ status: 401, description: 'Unauthorized' })
     async createPost(
         @Body('text') text: string,
@@ -78,6 +108,7 @@ export class PostDataController {
     @UseGuards(AuthGuard)
     @ApiBearerAuth()
     @ApiResponse({ status: 200, description: 'Get all owner posts' })
+    @ApiResponse({ status: 400, description: 'Bad Request' })
     @ApiResponse({ status: 401, description: 'Unauthorized' })
     async getMyPost(@Request() req) {
         const user = req.user;
@@ -97,6 +128,7 @@ export class PostDataController {
     @ApiBearerAuth()
     @Get('/allFollowing')
     @ApiResponse({ status: 200, description: 'Returns all post that following' })
+    @ApiResponse({ status: 400, description: 'Bad Request' })
     @ApiResponse({ status: 401, description: 'Unauthorized' })
     async getAllPostData(@Request() req) {
         const user = req.user;
@@ -118,9 +150,10 @@ export class PostDataController {
     @ApiBearerAuth()
     @ApiParam({ name: 'postBy', type: String })
     @ApiResponse({ status: 200, description: 'Get post of user that we look' })
+    @ApiResponse({ status: 400, description: 'Bad Request' })
     @ApiResponse({ status: 401, description: 'Unauthorized' })
-    async getUserPost(@Param('postBy') postBy: string) {
-        const postData = await this.postDataService.findByPostBy(postBy);
+    async getUserPost(@Param()param: PostNameParamDto) {
+        const postData = await this.postDataService.findByPostBy(param.postBy);
         if (postData)
         return ({
                 status: 200,
@@ -137,6 +170,7 @@ export class PostDataController {
     @ApiParam({ name: 'id', description: 'The objectId of post' })
     @HttpCode(200)
     @ApiResponse({ status: 200, description: 'delete' })
+    @ApiResponse({ status: 400, description: 'Bad Request' })
     @ApiResponse({ status: 401, description: 'Unauthorized' })
     async deletePost(
         @Param('id') post_data_id: string,
@@ -160,14 +194,15 @@ export class PostDataController {
     @ApiBody({ type: UpdatePostDataNameDto })
     @HttpCode(200)
     @ApiResponse({ status: 200, description: 'change text in post' })
+    @ApiResponse({ status: 400, description: 'Bad Request' })
     @ApiResponse({ status: 401, description: 'Unauthorized' })
     async changePost(
-        @Param('id') post_data_id: string,
+        @Param()param: PostIdParamDto,
         @Body('text') text: string,
         @Request () req
     ) {
         const user = req.user;
-        const postData = await this.postDataService.changePostData(post_data_id, text, user.name)
+        const postData = await this.postDataService.changePostData(param.id, text, user.name)
         return ({
             status: 200,
             message: "change success",
@@ -183,14 +218,15 @@ export class PostDataController {
     @ApiParam({ name: 'id', description: 'The objectId of post' })
     @HttpCode(200)
     @ApiResponse({ status: 200, description: 'comment in post' })
+    @ApiResponse({ status: 400, description: 'Bad Request' })
     @ApiResponse({ status: 401, description: 'Unauthorized' })
     async commentPost(
-        @Param('id') post_data_id: string,
+        @Param()param: PostIdParamDto,
         @Body('text') text: string,
         @Request () req
     ) {
         const user = req.user;
-        const postData = await this.postDataService.commentPostData(post_data_id, text, user.name)
+        const postData = await this.postDataService.commentPostData(param.id, text, user.name)
         return ({
             status: 200,
             message: "comment success",
@@ -206,14 +242,15 @@ export class PostDataController {
     @ApiBody({ type: DeleteCommentDataDto })
     @HttpCode(200)
     @ApiResponse({ status: 200, description: 'delete comment in post' })
+    @ApiResponse({ status: 400, description: 'Bad Request' })
     @ApiResponse({ status: 401, description: 'Unauthorized' })
     async deleteCommentPost(
-        @Param('id') post_data_id: string,
+        @Param()param: PostIdParamDto,
         @Body('comment_id') comment_id: string,
         @Request () req
     ) {
         const user = req.user;
-        const postData = await this.postDataService.deleteCommentPostData(post_data_id, comment_id, user.name)
+        const postData = await this.postDataService.deleteCommentPostData(param.id, comment_id, user.name)
         return ({
             status: 200,
             message: "delete success",
