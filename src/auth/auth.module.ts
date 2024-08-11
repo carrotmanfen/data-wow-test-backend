@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
-import { AccountModule } from 'src/account/accounts.module';
+import { AccountModule } from '../account/accounts.module';
 import { JwtModule } from '@nestjs/jwt';
 import { jwtConstants } from './constant';
-import { AccountService } from 'src/account/accounts.service';
-import { AccountSchema } from 'src/account/schemas/account.model';
+import { AccountService } from '../account/accounts.service';
+import { AccountSchema } from '../account/schemas/account.model';
 import { MongooseModule } from '@nestjs/mongoose';
 
 @Module({

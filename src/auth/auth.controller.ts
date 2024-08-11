@@ -1,8 +1,8 @@
-import { Body, Controller, Post, HttpCode, HttpStatus, UseGuards, Get, Request } from '@nestjs/common';
+import { Body, Controller, Post, HttpCode, HttpStatus, UseGuards, Get, Request, UnauthorizedException } from '@nestjs/common';
 import { ApiTags, ApiResponse, ApiBody, ApiProperty, ApiQuery, ApiParam, ApiBearerAuth, ApiHeader } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { AuthGuard } from './auth.guard';
-import { AccountService } from 'src/account/accounts.service';
+import { AccountService } from '../account/accounts.service';
 import { IsString, IsNotEmpty } from 'class-validator';
 
 class LoginDto {
@@ -53,10 +53,7 @@ export class AuthController {
         data: tokens,
       };
     } catch (error) {
-      return {
-        statusCode: HttpStatus.UNAUTHORIZED,
-        message: 'Invalid credentials',
-      };
+        throw new UnauthorizedException('Invalid credentials');
     }
   }
 
@@ -75,10 +72,8 @@ export class AuthController {
         data: newAccessToken,
       };
     } catch (error) {
-      return {
-        statusCode: HttpStatus.UNAUTHORIZED,
-        message: 'Invalid or expired refresh token',
-      };
+        throw new UnauthorizedException('Invalid or expired refresh token');
+      
     }
   }
 

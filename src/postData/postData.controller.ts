@@ -2,7 +2,7 @@ import { Body, Controller, Get, Post, HttpCode, Patch, Param, Delete, UseGuards,
 import { ApiTags, ApiResponse, ApiBody, ApiProperty, ApiQuery, ApiParam, ApiBearerAuth, ApiHeader } from '@nestjs/swagger';
 import { PostDataService } from './postData.service';
 import { PostData } from './schemas/postData.model';
-import { AuthGuard } from 'src/auth/auth.guard';
+import { AuthGuard } from '../auth/auth.guard';
 import { IsString, IsNotEmpty } from 'class-validator';
 
 class CreatePostDataDto {

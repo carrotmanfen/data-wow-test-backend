@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import * as mongoose from 'mongoose';
 import { PostData } from './schemas/postData.model';
 import { Model } from 'mongoose';
-import { AccountService } from 'src/account/accounts.service';
+import { AccountService } from '../account/accounts.service';
 
 @Injectable()
 export class PostDataService {
