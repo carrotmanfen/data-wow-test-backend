@@ -5,13 +5,22 @@ import { Account } from './schemas/account.model';
 import { AuthGuard } from 'src/auth/auth.guard';
 
 class RegisterDto {
-    @ApiProperty()
+    @ApiProperty({
+        description: 'The username',
+        example: 'username',
+    })
     username: string;
 
-    @ApiProperty()
+    @ApiProperty({
+        description: 'The password',
+        example: 'password',
+    })
     password: string;
 
-    @ApiProperty()
+    @ApiProperty({
+        description: 'The name',
+        example: 'firstName',
+    })
     name: string;
 }
 
@@ -46,6 +55,7 @@ export class AccountController {
     @UseGuards(AuthGuard)
     @ApiBearerAuth()
     @ApiResponse({ status: 200, description: 'Returns username, name and following of user that login' })
+    @ApiResponse({ status: 401, description: 'Unauthorized' })
     @Get('/me')
     async getProfile(@Request() req) {
         const user = req.user;
@@ -67,6 +77,7 @@ export class AccountController {
     @ApiBearerAuth()
     @Get('/all')
     @ApiResponse({ status: 200, description: 'Returns name all account' })
+    @ApiResponse({ status: 401, description: 'Unauthorized' })
     async getAllAccount() {
         const accounts = await this.accountService.findAll();
         return ({
@@ -84,6 +95,7 @@ export class AccountController {
     @Patch('/updateName/:name')
     @ApiParam({ name: 'name', type: String })
     @ApiResponse({ status: 200, description: 'Update name of account' })
+    @ApiResponse({ status: 401, description: 'Unauthorized' })
     async updateName(@Request() req, @Param('name') name: string) {
         const user = req.user;
         const account = await this.accountService.updateName(user.username, name)
@@ -104,6 +116,7 @@ export class AccountController {
     @Patch('/follow/:name')
     @ApiParam({ name: 'name', type: String })
     @ApiResponse({ status: 200, description: 'Follow the account by name' })
+    @ApiResponse({ status: 401, description: 'Unauthorized' })
     async followAccount(@Request() req, @Param('name') followingName: string) {
         const user = req.user;
         const account = await this.accountService.follow(user.username, followingName)
@@ -124,6 +137,7 @@ export class AccountController {
     @Patch('/unfollow/:name')
     @ApiParam({ name: 'name', type: String })
     @ApiResponse({ status: 200, description: 'Unfollow the account by name' })
+    @ApiResponse({ status: 401, description: 'Unauthorized' })
     async unFollowAccount(@Request() req, @Param('name') followingName: string) {
         const user = req.user;
         const account = await this.accountService.unFollow(user.username, followingName)
@@ -143,6 +157,7 @@ export class AccountController {
     @ApiBearerAuth()
     @Delete('/delete')
     @ApiResponse({ status: 200, description: 'Delete account and delete all follower and following' })
+    @ApiResponse({ status: 401, description: 'Unauthorized' })
     async deleteAccount(@Request() req) {
         const user = req.user;
         const account = await this.accountService.deleteAccount(user.username)

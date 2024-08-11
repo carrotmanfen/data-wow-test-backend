@@ -6,19 +6,42 @@ import { AuthGuard } from 'src/auth/auth.guard';
 
 class CreatePostDataDto {
 
-    @ApiProperty()
+    @ApiProperty({
+        description: 'The text of post',
+        example: 'this_is_my_post',
+    })
     text: string;
 
 }
 
 class UpdatePostDataNameDto {
 
-    @ApiProperty()
+    @ApiProperty({
+        description: 'The text of post',
+        example: 'this_is_my_new_edit_post',
+    })
     text: string;
 
-    @ApiProperty()
-    id: string;
+}
 
+class CommentPostDataDto {
+
+    @ApiProperty({
+        description: 'The text of comment',
+        example: 'this_is_my_comment',
+    })
+    text: string;
+
+}
+
+class DeleteCommentDataDto{
+
+    @ApiProperty({
+        description: 'The objectId of comment',
+        example: 'comment-id',
+    })
+    comment_id: string;
+    
 }
 
 @Controller('posts')
@@ -26,45 +49,12 @@ class UpdatePostDataNameDto {
 export class PostDataController {
     constructor(private readonly postDataService: PostDataService) { }
 
-    @Get('/all')
-    @ApiResponse({ status: 200, description: 'Returns the greeting message' })
-    async getAllPostData() {
-        const posts = await this.postDataService.findAll();
-        return ({
-            status: 200,
-            message: "there is all post success",
-            results: posts.map(post => ({
-                _id: post._id,
-                text: post.text,
-                date: post.date,
-                postBy: post.postBy
-            })
-            )
-        })
-    }
-
-    @Get(':id')
-    @ApiParam({ name: 'id', description: 'The project_id parameter' })
-    @ApiResponse({ status: 200, description: 'Returns the greeting message' })
-    async getPostData(
-        @Param('id') id: string
-    ) {
-        const postData = await this.postDataService.findById(id);
-        if (postData)
-            return ({
-                status: 200,
-                message: "this is that post",
-                results: postData
-            });
-        else
-            return "don't have post"
-    }
-
     @UseGuards(AuthGuard)
     @ApiBearerAuth()
     @Post('/createPost')
     @ApiBody({ type: CreatePostDataDto })
-    @ApiResponse({ status: 201, description: 'Register' })
+    @ApiResponse({ status: 201, description: 'Create new post' })
+    @ApiResponse({ status: 401, description: 'Unauthorized' })
     async createPost(
         @Body('text') text: string,
         @Request() req
@@ -84,14 +74,76 @@ export class PostDataController {
         })
     }
 
+    @Get('/me')
+    @UseGuards(AuthGuard)
+    @ApiBearerAuth()
+    @ApiResponse({ status: 200, description: 'Get all owner posts' })
+    @ApiResponse({ status: 401, description: 'Unauthorized' })
+    async getMyPost(@Request() req) {
+        const user = req.user;
+        console.log("hello"+user)
+        const postData = await this.postDataService.findByPostBy(user.name);
+        if (postData)
+        return ({
+                status: 200,
+                message: "this is that post",
+                results: postData
+            });
+        else
+            return "don't have post"
+    }
+
+    @UseGuards(AuthGuard)
+    @ApiBearerAuth()
+    @Get('/allFollowing')
+    @ApiResponse({ status: 200, description: 'Returns all post that following' })
+    @ApiResponse({ status: 401, description: 'Unauthorized' })
+    async getAllPostData(@Request() req) {
+        const user = req.user;
+        const posts = await this.postDataService.findFollowingPostData(user.username);
+        return ({
+            status: 200,
+            message: "there is all post success",
+            results: posts.map(post => ({
+                _id: post._id,
+                text: post.text,
+                date: post.date,
+                postBy: post.postBy
+            }))
+        })
+    }
+
+    @Get('/:postBy')
+    @UseGuards(AuthGuard)
+    @ApiBearerAuth()
+    @ApiParam({ name: 'postBy', type: String })
+    @ApiResponse({ status: 200, description: 'Get post of user that we look' })
+    @ApiResponse({ status: 401, description: 'Unauthorized' })
+    async getUserPost(@Param('postBy') postBy: string) {
+        const postData = await this.postDataService.findByPostBy(postBy);
+        if (postData)
+        return ({
+                status: 200,
+                message: "this is that post",
+                results: postData
+            });
+        else
+            return "don't have post"
+    }
+
+    @UseGuards(AuthGuard)
+    @ApiBearerAuth()
     @Delete('/deletePost/:id')
-    @ApiParam({ name: 'id', description: 'The post_data_id parameter' })
+    @ApiParam({ name: 'id', description: 'The objectId of post' })
     @HttpCode(200)
     @ApiResponse({ status: 200, description: 'delete' })
+    @ApiResponse({ status: 401, description: 'Unauthorized' })
     async deletePost(
-        @Param('id') post_data_id: string
+        @Param('id') post_data_id: string,
+        @Request() req
     ) {
-        const postData = await this.postDataService.deletePostData(post_data_id)
+        const user = req.user;
+        const postData = await this.postDataService.deletePostData(post_data_id, user.name)
         return ({
             status: 200,
             message: "register success",
@@ -101,21 +153,72 @@ export class PostDataController {
         })
     }
 
-    @Patch('/changePost')
+    @UseGuards(AuthGuard)
+    @ApiBearerAuth()
+    @Patch('/editPost:id')
+    @ApiParam({ name: 'id', description: 'The objectId of post' })
     @ApiBody({ type: UpdatePostDataNameDto })
     @HttpCode(200)
-    @ApiResponse({ status: 200, description: 'change' })
+    @ApiResponse({ status: 200, description: 'change text in post' })
+    @ApiResponse({ status: 401, description: 'Unauthorized' })
     async changePost(
-        @Body('id') post_data_id: string,
-        @Body('text') text: string
+        @Param('id') post_data_id: string,
+        @Body('text') text: string,
+        @Request () req
     ) {
-        const postData = await this.postDataService.changePostData(post_data_id, text)
+        const user = req.user;
+        const postData = await this.postDataService.changePostData(post_data_id, text, user.name)
         return ({
             status: 200,
             message: "change success",
-            results: {
-                message: postData
-            }
+            results: postData
+            
+        })
+    }
+
+    @UseGuards(AuthGuard)
+    @ApiBearerAuth()
+    @Patch('/comment/:id')
+    @ApiBody({ type: CommentPostDataDto })
+    @ApiParam({ name: 'id', description: 'The objectId of post' })
+    @HttpCode(200)
+    @ApiResponse({ status: 200, description: 'comment in post' })
+    @ApiResponse({ status: 401, description: 'Unauthorized' })
+    async commentPost(
+        @Param('id') post_data_id: string,
+        @Body('text') text: string,
+        @Request () req
+    ) {
+        const user = req.user;
+        const postData = await this.postDataService.commentPostData(post_data_id, text, user.name)
+        return ({
+            status: 200,
+            message: "comment success",
+            results: postData
+            
+        })
+    }
+
+    @UseGuards(AuthGuard)
+    @ApiBearerAuth()
+    @Patch('/deleteComment/:id')
+    @ApiParam({ name: 'id', description: 'The objectId of post' })
+    @ApiBody({ type: DeleteCommentDataDto })
+    @HttpCode(200)
+    @ApiResponse({ status: 200, description: 'delete comment in post' })
+    @ApiResponse({ status: 401, description: 'Unauthorized' })
+    async deleteCommentPost(
+        @Param('id') post_data_id: string,
+        @Body('comment_id') comment_id: string,
+        @Request () req
+    ) {
+        const user = req.user;
+        const postData = await this.postDataService.deleteCommentPostData(post_data_id, comment_id, user.name)
+        return ({
+            status: 200,
+            message: "delete success",
+            results: postData
+            
         })
     }
 

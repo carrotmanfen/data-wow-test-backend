@@ -22,6 +22,10 @@ export class AccountService {
         return this.accountModel.findOne({ username: { $eq: username } }).exec();
     }
 
+    async findById(id: string): Promise<Account | undefined> {
+        return this.accountModel.findOne({ _id: { $eq: id } }).exec();
+    }
+
     async create(username: string, password:string, name:string){
         const account = await this.accountModel.findOne({
             $or: [
