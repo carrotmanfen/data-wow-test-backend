@@ -24,7 +24,7 @@ $ npm run start:dev
 
 ## When Running
 
-```bash
+
 # When running you can see Api document in swagger by
 
 http://localhost:3001/api/
@@ -32,7 +32,6 @@ http://localhost:3001/api/
 
 
 
-```
 
 ## Test
 
