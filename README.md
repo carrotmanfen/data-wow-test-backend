@@ -1,7 +1,11 @@
 ## Description
 
-This repository is assignment (backend) for Data Wow company
-You can run and test follow command below
+This repository is assignment (backend) for Data Wow company.
+
+This repository include backend service with basic auth (accessToken and refreshToken),
+unit test for model and functional test for api endpoint.
+
+You can run and test follow command below,
 
 
 ## Installation
@@ -35,6 +39,8 @@ When running you can see Api document in swagger by
 ## Test
 
 ```bash
+# unit tests
+$ npm run test
 
 # e2e tests
 $ npm run test:e2e
