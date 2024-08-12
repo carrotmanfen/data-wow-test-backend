@@ -1,16 +1,20 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, forwardRef, Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import * as mongoose from 'mongoose';
 import { Account } from './schemas/account.model';
 import { Model } from 'mongoose';
 import * as moment from 'moment';
+import { PostDataService } from '../postData/postData.service';
+import { PostDataSchema } from 'src/postData/schemas/postData.model';
 
 @Injectable()
 export class AccountService {
     // private account: Account[]=[];
     constructor(
         @InjectModel('Account')
-        private readonly accountModel:Model<Account>
+        private readonly accountModel:Model<Account>,
+        @Inject(forwardRef(() => PostDataService))
+        private readonly postDataService: PostDataService
     ){}
 
     async findAll():Promise<Account[]> {
@@ -50,17 +54,6 @@ export class AccountService {
         }
     }
 
-    async updateName(username: string, name: string){
-        const account = await this.accountModel.findOne({ username: { $eq: username } }).exec();
-        if(!account){
-            throw new NotFoundException('Could not find account to update')
-        }
-        account.name = name
-        const res = await account.save();
-        console.log(res)
-        return res ;
-    }
-
     async follow(username: string, followingName: string){
         const account = await this.accountModel.findOne({ username: { $eq: username } }).exec();
         const accountFollowing = await this.accountModel.findOne({ name: { $eq: followingName } }).exec();
@@ -68,6 +61,9 @@ export class AccountService {
             throw new BadRequestException('Something bad happened', { cause: new Error(), description: 'Can not follow yourself' })
         }
         if(account && accountFollowing){
+            if(account.following.includes(accountFollowing.name)){
+                throw new BadRequestException('Something bad happened', { cause: new Error(), description: 'Already following this account' })
+            }
             account.following.push(accountFollowing.name)
             accountFollowing.followers.push(account.name)
             const res = await account.save();
@@ -104,6 +100,9 @@ export class AccountService {
         if(!account){
             throw new NotFoundException('Could not find account to delete')
         }
+
+        await this.postDataService.deleteAllPostData(account.name)
+        
         await this.accountModel.updateMany(
             { following: username },
             { $pull: { following: username } }

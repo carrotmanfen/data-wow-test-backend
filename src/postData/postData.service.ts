@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, forwardRef, Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import * as mongoose from 'mongoose';
 import { PostData } from './schemas/postData.model';
@@ -10,6 +10,7 @@ export class PostDataService {
     constructor(
         @InjectModel('PostData')
         private readonly postDataModel:Model<PostData>,
+        @Inject(forwardRef(() => AccountService))
         private readonly accountService: AccountService
     ){}
 
@@ -79,6 +80,13 @@ export class PostDataService {
         }else{
             return "deleted post : "+post_data_id
         }
+    }
+
+    async deleteAllPostData(name: string){
+        const result = await this.postDataModel.deleteMany({postBy:name}).exec()
+        console.log(result)
+        return result.deletedCount
+        
     }
 
     async changePostData(post_data_id : string, text:string, name: string){

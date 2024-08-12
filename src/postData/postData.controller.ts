@@ -117,7 +117,7 @@ export class PostDataController {
         if (postData)
         return ({
                 status: 200,
-                message: "this is that post",
+                message: "return your post",
                 results: postData
             });
         else
@@ -157,7 +157,7 @@ export class PostDataController {
         if (postData)
         return ({
                 status: 200,
-                message: "this is that post",
+                message: "return all post of user",
                 results: postData
             });
         else

@@ -26,7 +26,7 @@ class LoginDto {
   class RefreshTokenDto {
     @ApiProperty({
       description: 'The refresh token',
-      example: 'your-refresh-token-here',
+      example: 'your_refresh_token_here',
     })
     @IsString()
     @IsNotEmpty()

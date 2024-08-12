@@ -110,27 +110,6 @@ export class AccountController {
         })
     }
 
-    @UseGuards(AuthGuard)
-    @ApiBearerAuth()
-    @Patch('/updateName/:name')
-    @ApiParam({ name: 'name', type: String })
-    @ApiResponse({ status: 200, description: 'Update name of account' })
-    @ApiResponse({ status: 400, description: 'Bad Request' })
-    @ApiResponse({ status: 401, description: 'Unauthorized' })
-    async updateName(@Request() req, @Param()param: NameParamDto) {
-        const user = req.user;
-        const account = await this.accountService.updateName(user.username, param.name)
-        return ({
-            status: 200,
-            message: "update name success",
-            results: {
-                _id: account._id,
-                username: account.username,
-                name: account.name,
-                following: account.following
-            }
-        })
-    }
 
     @UseGuards(AuthGuard)
     @ApiBearerAuth()

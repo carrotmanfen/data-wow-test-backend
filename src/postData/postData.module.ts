@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { PostDataController } from './postData.controller';
 import { PostDataService } from './postData.service';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -8,8 +8,9 @@ import { AccountModule } from '../account/accounts.module';
 import { AccountSchema } from '../account/schemas/account.model';
 
 @Module({
-  imports: [MongooseModule.forFeature([{name:'PostData', schema:PostDataSchema}, {name: 'Account', schema: AccountSchema}]), AccountModule],
+  imports: [MongooseModule.forFeature([{name:'PostData', schema:PostDataSchema}, {name: 'Account', schema: AccountSchema}]), forwardRef(() => AccountModule)],
   providers:[PostDataService, AccountService],
-  controllers: [PostDataController]
+  controllers: [PostDataController],
+  exports: [PostDataService],
 })
 export class PostDataModule {}

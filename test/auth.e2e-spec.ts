@@ -1,198 +1,160 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import * as request from 'supertest';
-import { AuthModule } from '../src/auth/auth.module';
 import { AppModule } from '../src/app.module';
 import { AuthService } from '../src/auth/auth.service';
 import { JwtService } from '@nestjs/jwt';
+import { AccountService } from '../src/account/accounts.service';
+import { PostDataService } from '../src/postData/postData.service';
 
 describe('AuthController (e2e)', () => {
-    let app: INestApplication;
-    let authService: AuthService;
-    let jwtService: JwtService;
+  let app: INestApplication;
+  let authService: AuthService;
+  let jwtService: JwtService;
+  let accountService: AccountService;
 
-    beforeAll(async () => {
-        const moduleFixture: TestingModule = await Test.createTestingModule({
-            imports: [AppModule], // Import the whole AppModule or only necessary modules like AuthModule
-        }).compile();
+  const mockAccountService = {
+    create: jest.fn(),
+    findOne: jest.fn(),
+    // Add other AccountService methods as needed
+  };
 
-        app = moduleFixture.createNestApplication();
-        app.useGlobalPipes(new ValidationPipe({ transform: true }));
-        await app.init();
+  const mockPostDataService = {
+    getPostsByUserId: jest.fn(),
+  };
 
-        authService = moduleFixture.get<AuthService>(AuthService);
-        jwtService = moduleFixture.get<JwtService>(JwtService);
+  beforeAll(async () => {
+    const moduleFixture: TestingModule = await Test.createTestingModule({
+      imports: [AppModule], // Import the whole AppModule or specific modules
+    })
+      .overrideProvider(AccountService)
+      .useValue(mockAccountService)
+      .overrideProvider(PostDataService)
+      .useValue(mockPostDataService)
+      .compile();
+
+    app = moduleFixture.createNestApplication();
+    app.useGlobalPipes(new ValidationPipe({ transform: true }));
+    await app.init();
+
+    authService = moduleFixture.get<AuthService>(AuthService);
+    jwtService = moduleFixture.get<JwtService>(JwtService);
+    accountService = moduleFixture.get<AccountService>(AccountService);
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  describe('/auth/login (POST)', () => {
+    it('should login and return access and refresh tokens', async () => {
+      const loginDto = { username: 'testuser', password: 'testpassword' };
+
+      jest.spyOn(authService, 'signIn').mockResolvedValue({
+        access_token: 'mockAccessToken',
+        refresh_token: 'mockRefreshToken',
+      });
+
+      const response = await request(app.getHttpServer())
+        .post('/auth/login')
+        .send(loginDto)
+        .expect(200);
+
+      expect(response.body).toEqual({
+        statusCode: 200,
+        message: 'Login successful',
+        data: {
+          access_token: 'mockAccessToken',
+          refresh_token: 'mockRefreshToken',
+        },
+      });
     });
 
-    afterAll(async () => {
-        await app.close();
+    it('should return 400 for invalid data types', async () => {
+      const invalidDto = { username: 123, password: 123 };
+
+      const response = await request(app.getHttpServer())
+        .post('/auth/login')
+        .send(invalidDto)
+        .expect(400);
+
+      expect(response.body).toEqual({
+        statusCode: 400,
+        error: "Bad Request",
+        message: ['username must be a string', 'password must be a string'],
+      });
     });
 
-    describe('/auth/login (POST)', () => {
-        it('should login and return access and refresh tokens', async () => {
-            const loginDto = { username: 'testuser', password: 'testpassword' };
+    it('should return 401 for invalid credentials', async () => {
+      const invalidLoginDto = { username: 'invaliduser', password: 'wrongpassword' };
 
-            // Mock the AuthService to avoid using real database in the test
-            jest.spyOn(authService, 'signIn').mockResolvedValue({
-                access_token: 'mockAccessToken',
-                refresh_token: 'mockRefreshToken',
-            });
+      jest.spyOn(authService, 'signIn').mockRejectedValue(new Error('Unauthorized'));
 
-            return request(app.getHttpServer())
-                .post('/auth/login')
-                .send(loginDto)
-                .expect(200)
-                .expect(res => {
-                    expect(res.body).toEqual({
-                        statusCode: 200,
-                        message: 'Login successful',
-                        data: {
-                            access_token: 'mockAccessToken',
-                            refresh_token: 'mockRefreshToken',
-                        },
-                    });
-                });
-        });
+      const response = await request(app.getHttpServer())
+        .post('/auth/login')
+        .send(invalidLoginDto)
+        .expect(401);
 
-        it('should return 400 for bad request', async () => {
-            const loginDto = { username: 123, password: 123 };
+      expect(response.body).toEqual({
+        statusCode: 401,
+        error: "Unauthorized",
+        message: 'Invalid credentials',
+      });
+    });
+  });
 
-            // Mock the AuthService to return Unauthorized error
-            jest.spyOn(authService, 'signIn').mockRejectedValue(new Error('Bad Request'));
+  describe('/auth/refresh (POST)', () => {
+    it('should refresh the token', async () => {
+      const refreshTokenDto = { refresh_token: 'mockRefreshToken' };
 
-            return request(app.getHttpServer())
-                .post('/auth/login')
-                .send(loginDto)
-                .expect(400)
-                .expect(res => {
-                    expect(res.body).toEqual({
-                        statusCode: 400,
-                        error: "Bad Request",
-                        message: ['username must be a string', 'password must be a string'],
-                    });
-                });
-        });
+      jest.spyOn(authService, 'refreshToken').mockResolvedValue({
+        access_token: 'newMockAccessToken',
+      });
 
-        it('should return 400 for bad request', async () => {
-            const loginDto = { username: "invalid username", password: 123 };
+      const response = await request(app.getHttpServer())
+        .post('/auth/refresh')
+        .send(refreshTokenDto)
+        .expect(200);
 
-            // Mock the AuthService to return Unauthorized error
-            jest.spyOn(authService, 'signIn').mockRejectedValue(new Error('Bad Request'));
-
-            return request(app.getHttpServer())
-                .post('/auth/login')
-                .send(loginDto)
-                .expect(400)
-                .expect(res => {
-                    expect(res.body).toEqual({
-                        statusCode: 400,
-                        error: "Bad Request",
-                        message: [ 'password must be a string'],
-                    });
-                });
-        });
-
-        it('should return 400 for bad request', async () => {
-            const loginDto = { username: 123, password: "invalid password" };
-      
-            // Mock the AuthService to return Unauthorized error
-            jest.spyOn(authService, 'signIn').mockRejectedValue(new Error('Bad Request'));
-      
-            return request(app.getHttpServer())
-              .post('/auth/login')
-              .send(loginDto)
-              .expect(400)
-              .expect(res => {
-                expect(res.body).toEqual({
-                  statusCode: 400,
-                  error: "Bad Request",
-                  message: ['username must be a string'],
-                });
-              });
-          });
-
-        it('should return 401 for invalid credentials', async () => {
-            const loginDto = { username: 'invaliduser', password: 'wrongpassword' };
-
-            // Mock the AuthService to return Unauthorized error
-            jest.spyOn(authService, 'signIn').mockRejectedValue(new Error('Unauthorized'));
-
-            return request(app.getHttpServer())
-                .post('/auth/login')
-                .send(loginDto)
-                .expect(401)
-                .expect(res => {
-                    expect(res.body).toEqual({
-                        statusCode: 401,
-                        error: "Unauthorized",
-                        message: 'Invalid credentials',
-                    });
-                });
-        });
+      expect(response.body).toEqual({
+        statusCode: 200,
+        message: 'Token refreshed successfully',
+        data: {
+          access_token: 'newMockAccessToken',
+        },
+      });
     });
 
-    describe('/auth/refresh (POST)', () => {
-        it('should refresh the token', async () => {
-            const refreshTokenDto = { refresh_token: 'mockRefreshToken' };
+    it('should return 400 for invalid refresh token type', async () => {
+      const invalidRefreshTokenDto = { refresh_token: 123 };
 
-            // Mock the AuthService to return a new access token
-            jest.spyOn(authService, 'refreshToken').mockResolvedValue({
-                access_token: 'newMockAccessToken',
-            });
+      const response = await request(app.getHttpServer())
+        .post('/auth/refresh')
+        .send(invalidRefreshTokenDto)
+        .expect(400);
 
-            return request(app.getHttpServer())
-                .post('/auth/refresh')
-                .send(refreshTokenDto)
-                .expect(200)
-                .expect(res => {
-                    expect(res.body).toEqual({
-                        statusCode: 200,
-                        message: 'Token refreshed successfully',
-                        data: {
-                            access_token: 'newMockAccessToken',
-                        },
-                    });
-                });
-        });
-
-        it('should return 400 for bad request', async () => {
-            const refreshTokenDto = { refresh_token: 123 };
-
-            // Mock the AuthService to throw an Unauthorized error
-            jest.spyOn(authService, 'refreshToken').mockRejectedValue(new Error('Bad Request'));
-
-            return request(app.getHttpServer())
-                .post('/auth/refresh')
-                .send(refreshTokenDto)
-                .expect(400)
-                .expect(res => {
-                    expect(res.body).toEqual({
-                        statusCode: 400,
-                        error: "Bad Request",
-                        message: ['refresh_token must be a string'],
-                    });
-                });
-        });
-
-        it('should return 401 for invalid refresh token', async () => {
-            const refreshTokenDto = { refresh_token: 'invalidToken' };
-
-            // Mock the AuthService to throw an Unauthorized error
-            jest.spyOn(authService, 'refreshToken').mockRejectedValue(new Error('Unauthorized'));
-
-            return request(app.getHttpServer())
-                .post('/auth/refresh')
-                .send(refreshTokenDto)
-                .expect(401)
-                .expect(res => {
-                    expect(res.body).toEqual({
-                        statusCode: 401,
-                        error: "Unauthorized",
-                        message: 'Invalid or expired refresh token',
-                    });
-                });
-        });
+      expect(response.body).toEqual({
+        statusCode: 400,
+        error: "Bad Request",
+        message: ['refresh_token must be a string'],
+      });
     });
 
+    it('should return 401 for invalid refresh token', async () => {
+      const invalidRefreshTokenDto = { refresh_token: 'invalidToken' };
 
+      jest.spyOn(authService, 'refreshToken').mockRejectedValue(new Error('Unauthorized'));
+
+      const response = await request(app.getHttpServer())
+        .post('/auth/refresh')
+        .send(invalidRefreshTokenDto)
+        .expect(401);
+
+      expect(response.body).toEqual({
+        statusCode: 401,
+        error: "Unauthorized",
+        message: 'Invalid or expired refresh token',
+      });
+    });
+  });
 });
