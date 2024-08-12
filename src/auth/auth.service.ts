@@ -21,7 +21,7 @@ export class AuthService {
         const payload2 = { sub: user._id };
 
         const access_token = await this.jwtService.signAsync(payload, { expiresIn: '15m' });
-        const refresh_token = await this.jwtService.signAsync(payload2, { expiresIn: '7d' }); // Set refresh token expiration as needed
+        const refresh_token = await this.jwtService.signAsync(payload2, { expiresIn: '7d' }); 
 
         return {
             access_token,

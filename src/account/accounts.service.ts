@@ -9,7 +9,6 @@ import { PostDataSchema } from 'src/postData/schemas/postData.model';
 
 @Injectable()
 export class AccountService {
-    // private account: Account[]=[];
     constructor(
         @InjectModel('Account')
         private readonly accountModel:Model<Account>,

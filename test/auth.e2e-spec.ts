@@ -16,7 +16,6 @@ describe('AuthController (e2e)', () => {
   const mockAccountService = {
     create: jest.fn(),
     findOne: jest.fn(),
-    // Add other AccountService methods as needed
   };
 
   const mockPostDataService = {
@@ -25,7 +24,6 @@ describe('AuthController (e2e)', () => {
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule], // Import the whole AppModule or specific modules
     })
       .overrideProvider(AccountService)
       .useValue(mockAccountService)

@@ -165,7 +165,6 @@ export class PostDataService {
         postData.comments = postData.comments.filter(comment => comment._id.toString() !== comment_id);
         const result = await postData.save();
         
-        // console.log(result);
         return result;
     }
 

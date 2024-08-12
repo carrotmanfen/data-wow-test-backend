@@ -62,7 +62,6 @@ describe('AccountController (e2e)', () => {
     jwtService = moduleFixture.get<JwtService>(JwtService);
     accountService = moduleFixture.get<AccountService>(AccountService);
 
-    // Create test users and generate valid JWT token
     const user = await accountService.create(testUser.username, testUser.password, testUser.name);
     await accountService.create(testUser2.username, testUser2.password, testUser2.name);
     accessToken = await jwtService.signAsync({ sub: user._id, username: user.username });
@@ -104,7 +103,7 @@ describe('AccountController (e2e)', () => {
     it('should return 400 for missing required fields', () => {
       return request(app.getHttpServer())
         .post('/accounts/register')
-        .send({ username: 'incompleteuser' }) // Missing password and name
+        .send({ username: 'incompleteuser' }) 
         .expect(400);
     });
   });
@@ -176,7 +175,6 @@ describe('AccountController (e2e)', () => {
         .expect(200)
         .expect(res => {
           expect(res.body.message).toEqual('follow success');
-          // Additional assertions can be added to check if the user is now followed
         });
     });
 
@@ -210,7 +208,6 @@ describe('AccountController (e2e)', () => {
         .expect(200)
         .expect(res => {
           expect(res.body.message).toEqual('unfollow success');
-          // Additional assertions can be added to check if the user is no longer followed
         });
     });
 

@@ -99,7 +99,7 @@ describe('PostDataController (e2e)', () => {
       return request(app.getHttpServer())
         .post('/posts/createPost')
         .set('Authorization', `Bearer ${accessToken}`)
-        .send({ text: 123 }) // Invalid input
+        .send({ text: 123 }) 
         .expect(400)
         .expect((res) => {
           expect(res.body).toEqual({
@@ -193,7 +193,7 @@ describe('PostDataController (e2e)', () => {
       return request(app.getHttpServer())
         .patch(`/posts/editPost/${post_id}`)
         .set('Authorization', `Bearer ${accessToken}`)
-        .send({ text: 123 }) // Invalid input
+        .send({ text: 123 }) 
         .expect(400)
         .expect((res) => {
           expect(res.body).toEqual({
@@ -232,7 +232,7 @@ describe('PostDataController (e2e)', () => {
       return request(app.getHttpServer())
         .patch(`/posts/comment/${post_id}`)
         .set('Authorization', `Bearer ${accessToken}`)
-        .send({ text: 123 }) // Invalid input
+        .send({ text: 123 })
         .expect(400)
         .expect((res) => {
           expect(res.body).toEqual({
