@@ -75,6 +75,7 @@ describe('AccountController (e2e)', () => {
   });
 
   describe('/accounts/register (POST)', () => {
+
     it('should register a new user successfully', () => {
       return request(app.getHttpServer())
         .post('/accounts/register')
@@ -84,6 +85,20 @@ describe('AccountController (e2e)', () => {
           expect(res.body.message).toEqual('register success');
           expect(res.body.results.username).toEqual('newuser');
         });
+    });
+
+    it('should return 400 for duplicate username', () => {
+      return request(app.getHttpServer())
+        .post('/accounts/register')
+        .send({ username: 'newuser', password: 'newpassword', name: 'NewUser' })
+        .expect(400);
+    });
+
+    it('should return 400 for invalid data types', () => {
+        return request(app.getHttpServer())
+            .post('/accounts/register')
+            .send({ username: 123, password: 123, name: 123 })
+            .expect(400);
     });
 
     it('should return 400 for missing required fields', () => {
@@ -125,6 +140,12 @@ describe('AccountController (e2e)', () => {
           expect(res.body.results.length).toBeGreaterThan(0);
         });
     });
+
+    it('should return 401 if no token is provided', () => {
+      return request(app.getHttpServer())
+        .get('/accounts/all')
+        .expect(401);
+    });
   });
 
   describe('/accounts/follow/:name (PATCH)', () => {
@@ -137,6 +158,27 @@ describe('AccountController (e2e)', () => {
           expect(res.body.message).toEqual('follow success');
           // Additional assertions can be added to check if the user is now followed
         });
+    });
+
+    it('should return 400 if trying to follow the same user again', () => {
+      return request(app.getHttpServer())
+        .patch(`/accounts/follow/${testUser2.name}`)
+        .set('Authorization', `Bearer ${accessToken}`)
+        .expect(400);
+    });
+
+    it('should return 400 if trying to follow oneself', () => {
+      return request(app.getHttpServer())
+        .patch(`/accounts/follow/${testUser.name}`)
+        .set('Authorization', `Bearer ${accessToken}`)
+        .expect(400);
+    });
+
+    it('should return 404 if trying to follow a non-existent user', () => {
+      return request(app.getHttpServer())
+        .patch('/accounts/follow/nonexistentuser')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .expect(404);
     });
   });
 
@@ -151,6 +193,21 @@ describe('AccountController (e2e)', () => {
           // Additional assertions can be added to check if the user is no longer followed
         });
     });
+
+    it('should return 400 if trying to unfollow the same user again', () => {
+      return request(app.getHttpServer())
+        .patch(`/accounts/unfollow/${testUser2.name}`)
+        .set('Authorization', `Bearer ${accessToken}`)
+        .expect(400);
+    });
+
+    it('should return 404 if trying to unfollow a non-existent user', () => {
+      return request(app.getHttpServer())
+        .patch('/accounts/unfollow/nonexistentuser')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .expect(404);
+    });
+    
   });
 
   describe('/accounts/delete (DELETE)', () => {
@@ -163,5 +220,12 @@ describe('AccountController (e2e)', () => {
           expect(res.body.message).toEqual('delete success');
         });
     });
+
+    it('should return 401 if no token is provided', () => {
+      return request(app.getHttpServer())
+        .delete('/accounts/delete')
+        .expect(401);
+    });
+
   });
 });

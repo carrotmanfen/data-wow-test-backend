@@ -52,11 +52,9 @@ export class AccountController {
     @ApiResponse({ status: 201, description: 'Register with username, password and name' })
     @ApiResponse({ status: 400, description: 'Bad Request' })
     async createAccount(
-        @Body('username') username: string,
-        @Body('password') password: string,
-        @Body('name') name: string,
+        @Body() registerDto: RegisterDto
     ): Promise<any> {
-        const account = await this.accountService.create(username, password, name)
+        const account = await this.accountService.create(registerDto.username, registerDto.password, registerDto.name)
         return ({
             status: 200,
             message: "register success",

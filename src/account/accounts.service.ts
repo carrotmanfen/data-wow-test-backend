@@ -57,7 +57,10 @@ export class AccountService {
     async follow(username: string, followingName: string){
         const account = await this.accountModel.findOne({ username: { $eq: username } }).exec();
         const accountFollowing = await this.accountModel.findOne({ name: { $eq: followingName } }).exec();
-        if(account === accountFollowing){
+        if(!account || !accountFollowing){
+            throw new NotFoundException('Could not find account to follow')
+        }
+        if(account.username === accountFollowing.username){
             throw new BadRequestException('Something bad happened', { cause: new Error(), description: 'Can not follow yourself' })
         }
         if(account && accountFollowing){
@@ -79,10 +82,16 @@ export class AccountService {
     async unFollow(username: string, followingName: string){
         const account = await this.accountModel.findOne({ username: { $eq: username } }).exec();
         const accountFollowing = await this.accountModel.findOne({ name: { $eq: followingName } }).exec();
+        if(!account || !accountFollowing){
+            throw new NotFoundException('Could not find account to follow')
+        }
         if(account === accountFollowing){
             throw new BadRequestException('Something bad happened', { cause: new Error(), description: 'Can not unFollow yourself' })
         }
         if(account && accountFollowing){
+            if(!account.following.includes(accountFollowing.name)){
+                throw new BadRequestException('Something bad happened', { cause: new Error(), description: 'Not following this account' })
+            }
             account.following = account.following.filter(following => following !== accountFollowing.name)
             accountFollowing.followers = accountFollowing.followers.filter(follower => follower !== account.name)
             const res = await account.save();
