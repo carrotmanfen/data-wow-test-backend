@@ -25,10 +25,9 @@ $ npm run start:dev
 ## When Running
 
 
-# When running you can see Api document in swagger by
+When running you can see Api document in swagger by
 
-http://localhost:3001/api/
-<a href="http://localhost:3001/api/" target="blank">http://localhost:3001/api/</a>
+<a href="http://localhost:3001/api/" target="_blank">http://localhost:3001/api/</a>
 
 
 
