@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, HttpCode, Patch, Param, Delete, UseGuards, Header, Request } from '@nestjs/common';
+import { Body, Controller, Get, Post, HttpCode, Patch, Param, Delete, UseGuards, Header, Request, NotFoundException } from '@nestjs/common';
 import { ApiTags, ApiResponse, ApiBody, ApiProperty, ApiQuery, ApiParam, ApiBearerAuth, ApiHeader } from '@nestjs/swagger';
 import { AccountService } from './accounts.service';
 import { Account } from './schemas/account.model';
@@ -71,7 +71,6 @@ export class AccountController {
     @UseGuards(AuthGuard)
     @ApiBearerAuth()
     @ApiResponse({ status: 200, description: 'Returns username, name and following of user that login' })
-    @ApiResponse({ status: 400, description: 'Bad Request' })
     @ApiResponse({ status: 401, description: 'Unauthorized' })
     @Get('/me')
     async getProfile(@Request() req) {
@@ -94,7 +93,6 @@ export class AccountController {
     @ApiBearerAuth()
     @Get('/all')
     @ApiResponse({ status: 200, description: 'Returns name all account' })
-    @ApiResponse({ status: 400, description: 'Bad Request' })
     @ApiResponse({ status: 401, description: 'Unauthorized' })
     async getAllAccount() {
         const accounts = await this.accountService.findAll();
@@ -105,6 +103,32 @@ export class AccountController {
                 _id: account._id,
                 name: account.name,
             }))
+        })
+    }
+
+    @UseGuards(AuthGuard)
+    @ApiBearerAuth()
+    @Get('/find/:name')
+    @ApiParam({ name: 'name', type: String })
+    @ApiResponse({ status: 200, description: 'Returns account by name' })
+    @ApiResponse({ status: 400, description: 'Bad Request' })
+    @ApiResponse({ status: 401, description: 'Unauthorized' })
+    @ApiResponse({ status: 404, description: 'Not Found' })
+    async getAccountByName(@Param()param: NameParamDto) {
+        const account = await this.accountService.findByName(param.name)
+        if(!account){
+            throw new NotFoundException('Could not find account by name')
+        }
+        return ({
+            status: 200,
+            message: "find account success",
+            results: {
+                _id: account._id,
+                username: account.username,
+                name: account.name,
+                following: account.following,
+                followers: account.followers
+            }
         })
     }
 

@@ -26,6 +26,10 @@ export class AccountService {
         return this.accountModel.findOne({ username: { $eq: username } }).exec();
     }
 
+    async findByName(name: string): Promise<Account | undefined> {
+        return this.accountModel.findOne({ name: { $eq: name } }).exec();
+    }
+
     async findById(id: string): Promise<Account | undefined> {
         return this.accountModel.findOne({ _id: { $eq: id } }).exec();
     }

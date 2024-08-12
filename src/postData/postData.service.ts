@@ -4,6 +4,7 @@ import * as mongoose from 'mongoose';
 import { PostData } from './schemas/postData.model';
 import { Model } from 'mongoose';
 import { AccountService } from '../account/accounts.service';
+import { Types } from 'mongoose';
 
 @Injectable()
 export class PostDataService {
@@ -44,22 +45,28 @@ export class PostDataService {
 
     async findByPostBy(postBy: string) {
         console.log(postBy)
+        const account = await this.accountService.findByName(postBy)
+        if(!account){
+            throw new NotFoundException('Could not find account')
+        }
         const postData = await this.postDataModel.find({ postBy: { $eq: postBy } }).exec();
-        if(postData)
-            return postData;
-        else
-            throw new NotFoundException('Could not find postData')
+        return postData;
     }
 
-    async create(text:string, postBy:string){
-        const date = new Date()
-        const newPostData = new this.postDataModel({ text:text, postBy: postBy, date:date})
-        const res = await newPostData.save();
-        console.log(res)
-        if(res){
-            return res ;
-        }else{
-            throw new BadRequestException('Something bad happened', { cause: new Error(), description: 'Does not have this account' })
+    async create(text: string, postBy: string) {
+        try {
+            const date = new Date();
+            const newPostData = new this.postDataModel({ text, postBy, date });
+            const res = await newPostData.save();
+            console.log("Saved Post Data:", res);
+            if (res) {
+                return res;
+            } else {
+                throw new BadRequestException('Failed to create post', { cause: new Error(), description: 'Could not save post data' });
+            }
+        } catch (error) {
+            console.error("Error in create method:", error);
+            throw new BadRequestException('An error occurred while creating the post', { cause: error, description: 'Unexpected error' });
         }
     }
 
@@ -111,6 +118,9 @@ export class PostDataService {
 
     async commentPostData(post_data_id : string, text:string, name: string){
         console.log(post_data_id)
+        if (!mongoose.Types.ObjectId.isValid(post_data_id)) {
+            throw new NotFoundException('Invalid post ID format');
+        }
         const postData = await this.postDataModel.findOne({ _id: { $eq: post_data_id } }).exec();
         if(!postData){
             throw new NotFoundException('Could not find post to comment')
@@ -127,7 +137,17 @@ export class PostDataService {
     async deleteCommentPostData(post_data_id: string, comment_id: string, name: string) {
         console.log(post_data_id);
         console.log(comment_id);
-        
+        try{
+            if (!Types.ObjectId.isValid(post_data_id)) {
+                throw new NotFoundException('Invalid post ID format');
+            }
+            if (!Types.ObjectId.isValid(comment_id)) {
+                throw new NotFoundException('Invalid comment ID format');
+            }
+        } catch (error) {
+            throw new NotFoundException('Invalid post ID format or comment ID format');
+
+        }
         const postData = await this.postDataModel.findOne({ _id: { $eq: post_data_id } }).exec();
         if (!postData) {
             throw new NotFoundException('Could not find post to delete comment');

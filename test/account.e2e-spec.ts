@@ -41,7 +41,7 @@ describe('AccountController (e2e)', () => {
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule, AppModule, PostDataModule],
+      imports: [AppModule, PostDataModule],
       providers: [
         AccountService,
         {
@@ -145,6 +145,26 @@ describe('AccountController (e2e)', () => {
       return request(app.getHttpServer())
         .get('/accounts/all')
         .expect(401);
+    });
+  });
+
+  describe('/accounts/find/:name (GET)', () => {
+    it('should return the account details by name', () => {
+      return request(app.getHttpServer())
+        .get(`/accounts/find/${testUser2.name}`)
+        .set('Authorization', `Bearer ${accessToken}`)
+        .expect(200)
+        .expect(res => {
+          expect(res.body.message).toEqual('find account success');
+          expect(res.body.results.name).toEqual(testUser2.name);
+        });
+    });
+
+    it('should return 404 if the account does not exist', () => {
+      return request(app.getHttpServer())
+        .get('/accounts/find/nonexistentuser')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .expect(404);
     });
   });
 

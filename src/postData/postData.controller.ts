@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, HttpCode, Patch, Param, Delete, UseGuards, Header, Request } from '@nestjs/common';
+import { Body, Controller, Get, Post, HttpCode, Patch, Param, Delete, UseGuards, Header, Request, BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiResponse, ApiBody, ApiProperty, ApiQuery, ApiParam, ApiBearerAuth, ApiHeader } from '@nestjs/swagger';
 import { PostDataService } from './postData.service';
 import { PostData } from './schemas/postData.model';
@@ -45,7 +45,7 @@ class DeleteCommentDataDto{
 
     @ApiProperty({
         description: 'The objectId of comment',
-        example: 'comment-id',
+        example: 'comment_id',
     })
     @IsString()
     @IsNotEmpty()
@@ -86,14 +86,18 @@ export class PostDataController {
     @ApiResponse({ status: 400, description: 'Bad Request' })
     @ApiResponse({ status: 401, description: 'Unauthorized' })
     async createPost(
-        @Body('text') text: string,
+        @Body() createPostDataDto: CreatePostDataDto,
         @Request() req
     ): Promise<any> {
         const user = req.user;
         console.log(user)
-        const postData = await this.postDataService.create(text, user.name);
+        if (!user || !user.name) {
+            throw new BadRequestException('User is not authenticated or missing name');
+        }
+    
+        const postData = await this.postDataService.create(createPostDataDto.text, user.name);
         return ({
-            status: 200,
+            status: 201,
             message: "register success",
             results: {
                 _id: postData._id,
@@ -108,7 +112,6 @@ export class PostDataController {
     @UseGuards(AuthGuard)
     @ApiBearerAuth()
     @ApiResponse({ status: 200, description: 'Get all owner posts' })
-    @ApiResponse({ status: 400, description: 'Bad Request' })
     @ApiResponse({ status: 401, description: 'Unauthorized' })
     async getMyPost(@Request() req) {
         const user = req.user;
@@ -128,7 +131,6 @@ export class PostDataController {
     @ApiBearerAuth()
     @Get('/allFollowing')
     @ApiResponse({ status: 200, description: 'Returns all post that following' })
-    @ApiResponse({ status: 400, description: 'Bad Request' })
     @ApiResponse({ status: 401, description: 'Unauthorized' })
     async getAllPostData(@Request() req) {
         const user = req.user;
@@ -154,14 +156,11 @@ export class PostDataController {
     @ApiResponse({ status: 401, description: 'Unauthorized' })
     async getUserPost(@Param()param: PostNameParamDto) {
         const postData = await this.postDataService.findByPostBy(param.postBy);
-        if (postData)
         return ({
                 status: 200,
                 message: "return all post of user",
                 results: postData
             });
-        else
-            return "don't have post"
     }
 
     @UseGuards(AuthGuard)
@@ -189,7 +188,7 @@ export class PostDataController {
 
     @UseGuards(AuthGuard)
     @ApiBearerAuth()
-    @Patch('/editPost:id')
+    @Patch('/editPost/:id')
     @ApiParam({ name: 'id', description: 'The objectId of post' })
     @ApiBody({ type: UpdatePostDataNameDto })
     @HttpCode(200)
@@ -198,11 +197,11 @@ export class PostDataController {
     @ApiResponse({ status: 401, description: 'Unauthorized' })
     async changePost(
         @Param()param: PostIdParamDto,
-        @Body('text') text: string,
+        @Body() updatePostDataNameDto: UpdatePostDataNameDto,
         @Request () req
     ) {
         const user = req.user;
-        const postData = await this.postDataService.changePostData(param.id, text, user.name)
+        const postData = await this.postDataService.changePostData(param.id, updatePostDataNameDto.text, user.name)
         return ({
             status: 200,
             message: "change success",
@@ -222,11 +221,11 @@ export class PostDataController {
     @ApiResponse({ status: 401, description: 'Unauthorized' })
     async commentPost(
         @Param()param: PostIdParamDto,
-        @Body('text') text: string,
+        @Body() commentPostDataDto: CommentPostDataDto,
         @Request () req
     ) {
         const user = req.user;
-        const postData = await this.postDataService.commentPostData(param.id, text, user.name)
+        const postData = await this.postDataService.commentPostData(param.id, commentPostDataDto.text, user.name)
         return ({
             status: 200,
             message: "comment success",
@@ -246,11 +245,11 @@ export class PostDataController {
     @ApiResponse({ status: 401, description: 'Unauthorized' })
     async deleteCommentPost(
         @Param()param: PostIdParamDto,
-        @Body('comment_id') comment_id: string,
+        @Body() deleteCommentDataDto: DeleteCommentDataDto,
         @Request () req
     ) {
         const user = req.user;
-        const postData = await this.postDataService.deleteCommentPostData(param.id, comment_id, user.name)
+        const postData = await this.postDataService.deleteCommentPostData(param.id, deleteCommentDataDto.comment_id, user.name)
         return ({
             status: 200,
             message: "delete success",
