@@ -49,7 +49,7 @@ export class PostDataService {
         if(!account){
             throw new NotFoundException('Could not find account')
         }
-        const postData = await this.postDataModel.find({ postBy: { $eq: postBy } }).exec();
+        const postData = await this.postDataModel.find({ postBy: { $eq: postBy } }).sort({date:-1}).exec();
         return postData;
     }
 
