@@ -142,7 +142,8 @@ export class PostDataController {
                 _id: post._id,
                 text: post.text,
                 date: post.date,
-                postBy: post.postBy
+                postBy: post.postBy,
+                comments: post.comments
             }))
         })
     }

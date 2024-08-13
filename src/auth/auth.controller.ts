@@ -50,7 +50,7 @@ export class AuthController {
       return {
         statusCode: HttpStatus.OK,
         message: 'Login successful',
-        data: tokens,
+        results: tokens,
       };
     } catch (error) {
         throw new UnauthorizedException('Invalid credentials');
@@ -69,7 +69,7 @@ export class AuthController {
       return {
         statusCode: HttpStatus.OK,
         message: 'Token refreshed successfully',
-        data: newAccessToken,
+        result: newAccessToken,
       };
     } catch (error) {
         throw new UnauthorizedException('Invalid or expired refresh token');

@@ -16,8 +16,10 @@ export class AccountService {
         private readonly postDataService: PostDataService
     ){}
 
-    async findAll():Promise<Account[]> {
-        const accounts = await this.accountModel.find().exec()
+    async findAllExceptYourself(username:string):Promise<Account[]> {
+        const user = await this.accountModel.findOne({ username: { $eq: username } }).exec();
+
+        const accounts = await this.accountModel.find({ username:{$ne:username}, name:{$nin:user.following}}).exec()
         return accounts
     }
 

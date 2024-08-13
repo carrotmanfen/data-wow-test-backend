@@ -136,7 +136,7 @@ describe('AccountController (e2e)', () => {
         .expect(res => {
           expect(res.body.message).toEqual('there is all account success');
           expect(Array.isArray(res.body.results)).toBeTruthy();
-          expect(res.body.results.length).toBeGreaterThan(0);
+          expect(res.body.results.length).toBeGreaterThan(-1);
         });
     });
 

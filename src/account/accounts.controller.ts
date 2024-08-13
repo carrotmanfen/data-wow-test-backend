@@ -94,8 +94,9 @@ export class AccountController {
     @Get('/all')
     @ApiResponse({ status: 200, description: 'Returns name all account' })
     @ApiResponse({ status: 401, description: 'Unauthorized' })
-    async getAllAccount() {
-        const accounts = await this.accountService.findAll();
+    async getAllAccount(@Request() req) {
+        const user = req.user;
+        const accounts = await this.accountService.findAllExceptYourself(user.username);
         return ({
             status: 200,
             message: "there is all account success",
