@@ -26,6 +26,7 @@ export class PostDataService {
             throw new NotFoundException('Could not find account')
         }
         const following = user.following
+        following.push(user.name)
         console.log(following)
         const postData = await this.postDataModel.find({ postBy: { $in: following } }).sort({date:-1}).exec();
         if(postData)
