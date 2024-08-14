@@ -48,3 +48,9 @@ $ npm run test:e2e
 ```
 
 
+## Things that can be further developed
+
+This service is very basic of small social media
+There are many feature that should have example image profile, chat, like etc.
+And this service don't have pagination of query that should have when have a lot of data
+
